@@ -6,176 +6,444 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FilmBee | {{file_name}}</title>
     <link rel="icon" href="https://i.ibb.co/Hh4kF2b/icon.png" type="image/x-icon">
-    <link rel="shortcut icon" href="https://i.ibb.co/Hh4kF2b/icon.png" type="image/x-icon">
-    <link rel="stylesheet" href="https://unpkg.com/sheryjs/dist/Shery.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/proavipatil/data@main/fs/src/plyr.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --primary: #f59e0b; /* Amber 500 */
+            --bg-dark: #020617; /* Slate 950 */
+            --glass: rgba(15, 23, 42, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.05) 0%, transparent 25%);
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-4px);
+            border-color: rgba(245, 158, 11, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- ADAPTIVE GRID/SCROLL (NEW) --- */
+        /* Default (Mobile): Horizontal Scroll */
+        .adaptive-grid {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding-bottom: 1rem;
+            scroll-snap-type: x mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .adaptive-grid::-webkit-scrollbar {
+            display: none;
+        }
+        .adaptive-grid > * {
+            flex: 0 0 140px; /* Fixed width cards on mobile */
+            scroll-snap-align: start;
+        }
+
+        /* Desktop: Switch to Grid */
+        @media (min-width: 1024px) {
+            .adaptive-grid {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                overflow-x: visible;
+                padding-bottom: 0;
+            }
+            .adaptive-grid > * {
+                flex: none;
+                width: auto;
+            }
+        }
+
+        /* Movie Card Hover Effect */
+        .movie-card {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .movie-card:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        /* Player Styling */
+        .plyr {
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            --plyr-color-main: var(--primary);
+            --plyr-video-background: #000;
+            width: 100%;
+            height: auto;
+        }
+        
+        .plyr__video-wrapper {
+            background: #000;
+        }
+
+        /* Modal Animation */
+        .modal {
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+    </style>
 </head>
 
-<body>
-    <nav>
-        <div class="nleft">
-            <a href="#">
-                <h3 id="heading" style="z-index: 100;" class="magnet title">FILE STREAM</h3>
-            </a>
-        </div>
-        <div class="nryt">
-            <a class="home-btn magnet" href="#main" onclick="toggleWidthnav(this)">HOME</a>
+<body class="flex flex-col">
 
-            <a href="#abtus" class="about-btn magnet" onclick="toggleWidthnav(this)">ABOUT</a>
+    <nav class="glass-panel sticky top-0 z-50">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <img src="https://i.ibb.co/Hh4kF2b/icon.png" alt="Logo" class="h-8 w-8 drop-shadow-md">
+                    <div>
+                        <h1 class="text-lg font-bold tracking-tight text-white leading-none">FileStreamBot</h1>
+                        <p class="text-[10px] text-amber-500 font-bold uppercase tracking-wider">By FilmBee</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <a href="https://link.filmbee.workers.dev/premium" class="hidden sm:inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold bg-amber-600/20 text-amber-500 border border-amber-500/30 hover:bg-amber-500 hover:text-white transition">
+                        ✨ Premium
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
-    <center>
-        <div class="about-nav">
-            <a href="#abtus" class="wlcm magnet" onclick="toggleWidth(this)">WELCOME</a>
-            <a href="#channels" class="abt-chnl magnet" onclick="toggleWidth(this)">LINKS</a>
-            <a href="#contact" class="magnet contact-btn" onclick="toggleWidth(this)">CONTACT</a>
-        </div>
-    </center>
 
-    <div class="outer">
-        <div class="inner">
-            <div class="main" id="main">
-                <video id="player" class="player" src="{{file_url}}" type="video/mp4" playsinline controls
-                    width="100%"></video>
-                <div class="player"></div>
-                <div class="file-name">
-                    <h4 style="display: inline;">File Name: </h4>
-                    <p style="display: inline;" id="myDiv">{{file_name}}</p><br>
-                    <h4 style="display: inline;">File Size: </h4>
-                    <p style="display: inline;">{{file_size}}</p>
-                </div>
-                <div class="downloadBtn">
-                    <button class="magnet" onclick="streamDownload()">
-                        <img style="height: 30px;" src="https://i.ibb.co/RjzYttX/dl.png" alt="">download video
-                    </button>
-                    <button class="magnet" onclick="copyStreamLink()">
-                        <img src="https://i.ibb.co/CM4Y586/link.png" alt="Copy Link">copy link
-                    </button>
-                    <button class="magnet" onclick="mpvex_player()">
-                        <img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" alt="">watch in MPVEx
-                    </button>
-                    <button class="magnet" onclick="vlc_player()">
-                        <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="">watch in VLC PLAYER
-                    </button>
-                    <button class="magnet" onclick="mx_player()">
-                        <img src="https://i.ibb.co/41WvtQ3/mx.png" alt="">watch in MX PLAYER
-                    </button>
-                    <button class="magnet" onclick="n_player()">
-                        <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" alt="">watch in nPlayer
-                    </button>
+    <main class="flex-grow w-full max-w-[1600px] mx-auto px-4 py-6 space-y-12">
+        
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            
+            <div class="xl:col-span-9 flex flex-col gap-6">
+                <div class="w-full bg-black rounded-2xl shadow-2xl relative z-10 overflow-hidden ring-1 ring-white/10">
+                    <video id="player" playsinline controls data-poster="https://i.ibb.co/Hh4kF2b/icon.png" class="w-full h-auto">
+                        <source src="{{file_url}}" type="video/mp4" />
+                    </video>
                 </div>
 
-            </div>
-            <div class="abt">
-                <div class="about">
-                    <div class="about-dets">
-
-                        <div class="abt-sec" id="abtus" style="padding: 160px 30px;">
-                            <h1 style="text-align: center;">WELCOME TO <Span>FILM BEE</Span></h1>
-                            <p style="text-align: center; line-height: 2;word-spacing: 2px;  letter-spacing: 0.8px;">
-                                This is a Telegram Bot to Stream <span>Movies</span> and <span>Series</span> directly on
-                                Telegram. You can also
-                                <span>download</span> them if you want. This bot is developed by <a
-                                    href="https://t.me/EithonX"><span style="font-weight: 700;">EithonX</span></a>
-                                <br><br>If you like this bot, then don't
-                                forget to share it with your friends and family.
-                            </p>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-white/5 pb-8">
+                    <div class="space-y-2 flex-1 min-w-0">
+                        <h1 class="text-xl md:text-3xl font-bold text-white leading-tight truncate">{{file_name}}</h1>
+                        <div class="flex items-center gap-3 text-sm text-slate-400">
+                            <span class="bg-slate-800/80 px-2.5 py-0.5 rounded text-xs font-mono text-slate-300 border border-white/5">{{file_size}}</span>
+                            <span>•</span>
+                            <span class="text-green-500 font-medium flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
+                                High Speed
+                            </span>
                         </div>
+                    </div>
+                    
+                    <div class="flex gap-3 w-full md:w-auto">
+                        <button onclick="streamDownload()" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3.5 rounded-xl font-semibold transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 border border-white/5">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download
+                        </button>
+                        <button onclick="copyStreamLink()" id="copyBtn" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3.5 rounded-xl font-semibold transition shadow-lg hover:shadow-xl hover:-translate-y-0.5 border border-white/5">
+                            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copy Link
+                        </button>
+                    </div>
+                </div>
 
-                        <div class="abt-sec" id="channels">
-                            <h1>IMPORTANT <span>LINKS</span></h1>
-                            <div class="links chnl-link">
-                                <a class="magnet" href="https://link.filmbee.workers.dev/premium">
-                                    <button>BUY PREMIUM</button>
-                                </a>
-                                <a class="magnet" href="https://link.filmbee.workers.dev/support">
-                                    <button>SUPPORT CHAT</button>
-                                </a>
-                                <a class="magnet" href="https://link.filmbee.workers.dev/bot">
-                                    <button>SEARCH BOT</button>
-                                </a>
+                <div id="android-players" class="hidden animate-fade-in">
+                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        Play Externally
+                    </h3>
+                    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 snap-x">
+                        
+                        <button onclick="mpvex_player()" class="snap-start flex-shrink-0 flex flex-col items-center gap-2 group w-20">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:border-indigo-500/50 transition-all">
+                                <img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" class="w-10 h-10 rounded-xl" alt="MPVEx">
                             </div>
-                        </div>
+                            <span class="text-[10px] font-medium text-slate-400 group-hover:text-indigo-400">MPVEx</span>
+                        </button>
 
-                        <div class="abt-sec" id="contact">
-                            <p style="text-align: center;">Report Bugs and Contact us on Telegram Below</p>
-                            <div class="links contact">
-                                <a href="https://t.me/EithonX">
-                                    <button>CONTACT DEV</button>
-                                </a>
+                        <button onclick="mx_pro_player()" class="snap-start flex-shrink-0 flex flex-col items-center gap-2 group w-20">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:border-blue-500/50 transition-all">
+                                <img src="https://i.ibb.co/41WvtQ3/mx.png" class="w-10 h-10 rounded-xl" alt="MX Pro">
                             </div>
-                        </div>
+                            <span class="text-[10px] font-medium text-slate-400 group-hover:text-blue-400">MX Pro</span>
+                        </button>
 
+                        <button onclick="mx_player()" class="snap-start flex-shrink-0 flex flex-col items-center gap-2 group w-20">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all">
+                                <img src="https://i.ibb.co/41WvtQ3/mx.png" class="w-10 h-10 rounded-xl grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100" alt="MX">
+                            </div>
+                            <span class="text-[10px] font-medium text-slate-500 group-hover:text-slate-300">MX Free</span>
+                        </button>
+
+                        <button onclick="vlc_player()" class="snap-start flex-shrink-0 flex flex-col items-center gap-2 group w-20">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-800 border border-white/10 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:border-orange-500/50 transition-all">
+                                <img src="https://i.ibb.co/px6fQs1/vlc.png" class="w-10 h-10 rounded-xl" alt="VLC">
+                            </div>
+                            <span class="text-[10px] font-medium text-slate-400 group-hover:text-orange-400">VLC</span>
+                        </button>
                     </div>
                 </div>
             </div>
+
+            <div class="xl:col-span-3 space-y-6">
+                <div class="glass-card p-6 rounded-2xl text-center relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-700"></div>
+                    <div class="relative z-10">
+                        <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner ring-1 ring-white/10">
+                            <span class="text-2xl">🐝</span>
+                        </div>
+                        <h3 class="text-white font-bold mb-1">Unlock Premium</h3>
+                        <p class="text-xs text-slate-400 mb-4">Get unlimited high-speed streaming without restrictions.</p>
+                        <a href="https://link.filmbee.workers.dev/premium" class="block w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5">
+                            Upgrade Now
+                        </a>
+                        <div class="grid grid-cols-2 gap-3 mt-3">
+                            <a href="https://link.filmbee.workers.dev/bot" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Search Bot</a>
+                            <a href="https://link.filmbee.workers.dev/support" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">Support</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <footer>
-            <center>
 
-                <div class="movie-cont">
-                    <div class="movieSug">
-                        <div class="movieDets">
+        <div class="relative">
+            <div class="flex items-center justify-between mb-6 px-1">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="w-1 h-6 bg-amber-500 rounded-full shadow-[0_0_15px_rgba(245,158,11,0.5)]"></span>
+                    Trending Now
+                </h2>
+                <button onclick="initTmdb()" class="group flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-white transition uppercase tracking-wide px-3 py-1.5 rounded-lg hover:bg-white/5">
+                    <svg class="w-3.5 h-3.5 group-hover:rotate-180 transition duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh
+                </button>
+            </div>
+            
+            <div id="rec-grid" class="adaptive-grid">
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+                <div class="flex-shrink-0 w-36 sm:w-44 aspect-[2/3] bg-slate-800/50 rounded-xl animate-pulse"></div>
+            </div>
+        </div>
 
-                        </div>
-                        <div class="movieimg">
-                            <img src="">
-                        </div>
-                    </div>
-                    <div class="low-width-movie-dets">
-                        <div class="movieStsBar">
-                            <div class="movieDets-mini">
+    </main>
 
-                            </div>
-                        </div>
-                    </div>
-                    <button class="ranMovBtn" onclick="getDets()">Get More Movies Suggestion</button>
-                </div>
+    <footer class="border-t border-white/5 mt-auto bg-[#020617] py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-600 text-xs">
+                &copy; 2025 FilmBee Organization. All Rights Reserved. <br>
+                <span class="opacity-50">Powered by FileStreamBot</span>
+            </p>
+        </div>
+    </footer>
 
-            </center>
-
-            <center>
-                <div class="copyright">
-                    <h5 class="text-center">Copyright © 2025 <a href="https://t.me/EithonX"><span
-                                style="font-weight: 700;">EithonX</span></a>. All
-                        Rights Reserved.</h5>
-                </div>
-            </center>
-        </footer>
+    <div id="premiumModal" class="modal fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="modal-content bg-slate-900 border border-slate-700 w-full max-w-sm p-6 rounded-2xl shadow-2xl text-center relative ring-1 ring-white/10">
+            <button onclick="closeModal()" class="absolute top-3 right-3 p-2 text-slate-500 hover:text-white rounded-full hover:bg-white/10 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <div class="w-14 h-14 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                <svg class="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            
+            <h3 class="text-lg font-bold text-white mb-2">Watch <span id="modalMovieName" class="text-amber-500">Movie</span></h3>
+            <p class="text-slate-400 text-xs mb-6 leading-relaxed">
+                This content is protected. Check availability in our search bot or upgrade to Premium for instant access.
+            </p>
+            
+            <div class="space-y-3">
+                <a href="https://link.filmbee.workers.dev/premium" class="block w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold shadow-lg transition">
+                    Get Premium Access
+                </a>
+                <a href="https://link.filmbee.workers.dev/bot" class="block w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold border border-white/5 transition">
+                    Search in Free Bot
+                </a>
+            </div>
+        </div>
     </div>
-</body>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.155.0/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/automat/controlkit.js@master/bin/controlKit.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sheryjs/dist/Shery.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const uncopyableElement = document.querySelector(".uncopyable");
-
-        if (uncopyableElement) {
-            uncopyableElement.addEventListener("selectstart", function (event) {
-                event.preventDefault();
-            });
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        // --- DEVICE DETECTION ---
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        // Show Android Players only if on Android
+        if (isAndroid) {
+            document.getElementById('android-players').classList.remove('hidden');
         }
-    });
 
-    // Added MPVEx Player Function
-    function mpvex_player() {
-        var url = document.getElementById("player").src;
-        // Construct the intent for app.marlboroadvance.mpvex
-        var intent = "intent:" + url + "#Intent;package=app.marlboroadvance.mpvex;type=video/*;scheme=https;end";
-        window.location.href = intent;
-    }
-</script>
-<script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
-<script src="https://proavipatil.github.io/data/fs/src/script.js"></script>
+        // --- PLAYER INIT ---
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
+        });
+        const fileUrl = "{{file_url}}";
 
+        function _0x4k2() {
+            const _p1 = "ed2";
+            const _p2 = "66";
+            const _p3 = "288";
+            const _p4 = "16a";
+            const _p5 = "70";
+            const _p6 = "33c3";
+            const _p7 = "fb77f";
+            const _p8 = "99";
+            const _p9 = "6abcb6bb";
+            return _p9 + _p8 + _p7 + _p6 + _p5 + _p4 + _p3 + _p2 + _p1;
+        }
+
+        // --- TMDB FETCH ---
+        const tmdbBaseUrl = 'https://image.tmdb.org/t/p/w500';
+
+        async function initTmdb() {
+            const grid = document.getElementById('rec-grid');
+            const apiKey = _0x4k2();
+            
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${apiKey}`);
+                const data = await response.json();
+                
+                // Shuffle & Slice
+                const shuffled = data.results.sort(() => 0.5 - Math.random());
+                const selected = shuffled.slice(0, 15); // Show 15 items in horizontal scroll
+
+                grid.innerHTML = ''; // Clear skeletons
+
+                selected.forEach((item, index) => {
+                    const title = item.title || item.name;
+                    const poster = item.poster_path ? `${tmdbBaseUrl}${item.poster_path}` : 'https://i.ibb.co/Hh4kF2b/icon.png';
+                    const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
+                    
+                    const delay = index * 50;
+
+                    const card = document.createElement('div');
+                    // ADAPTIVE CLASS: fixed width on mobile, auto on desktop
+                    card.className = 'flex-shrink-0 w-36 sm:w-44 snap-start cursor-pointer group relative';
+                    card.style.animation = `fadeInUp 0.6s ease forwards ${delay}ms`;
+                    card.style.opacity = '0';
+                    
+                    card.innerHTML = `
+                        <div class="movie-card relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-800 shadow-xl ring-1 ring-white/10">
+                            <img src="${poster}" class="w-full h-full object-cover" loading="lazy">
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                            
+                            <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-400 border border-amber-500/20 shadow-sm">
+                                ${rating}
+                            </div>
+                            
+                            <div class="absolute bottom-0 inset-x-0 p-3 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                <h4 class="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-md group-hover:text-amber-400 transition-colors">${title}</h4>
+                                <div class="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-75">
+                                    <span class="text-[9px] bg-white/20 px-1.5 rounded text-white backdrop-blur-sm">HD</span>
+                                    <span class="text-[9px] text-slate-300">Movie</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    card.onclick = () => openModal(title);
+                    grid.appendChild(card);
+                });
+
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    @keyframes fadeInUp {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                `;
+                document.head.appendChild(style);
+
+            } catch (error) {
+                console.error("API Error"); // Silent fail
+                grid.innerHTML = '<p class="w-full text-center text-slate-600 text-sm py-4">Suggestions currently offline</p>';
+            }
+        }
+
+        // --- MODAL ---
+        const modal = document.getElementById('premiumModal');
+        const modalTitle = document.getElementById('modalMovieName');
+
+        function openModal(title) {
+            modalTitle.innerText = title;
+            modal.classList.add('active');
+        }
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        // --- ACTIONS ---
+        function streamDownload() {
+            const a = document.createElement('a');
+            a.href = fileUrl; a.download = "{{file_name}}";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        async function copyStreamLink() {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                const btn = document.getElementById("copyBtn");
+                const og = btn.innerHTML;
+                btn.classList.replace("bg-slate-800", "bg-green-600");
+                btn.innerHTML = `<span class="text-white font-bold">Copied!</span>`;
+                setTimeout(() => {
+                    btn.classList.replace("bg-green-600", "bg-slate-800");
+                    btn.innerHTML = og;
+                }, 2000);
+            } catch (e) {}
+        }
+
+        // --- INTENTS (Mobile Only Logic) ---
+        function vlc_player() { window.location.href = `vlc://${fileUrl}`; }
+        function mx_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;end`; }
+        function mx_pro_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;end`; }
+        function mpvex_player() { window.location.href = `intent:${fileUrl}#Intent;action=android.intent.action.VIEW;package=app.marlboroadvance.mpvex;type=video/*;scheme=https;end`; }
+
+        // Init
+        initTmdb();
+    </script>
+</body>
 </html>

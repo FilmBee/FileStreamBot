@@ -1,4 +1,4 @@
-<h1 align="center">FilmBee Bot</h1>
+<h1 align="center">File Stream Bot</h1>
 <p align="center">
   <a href="https://t.me/EithonX">
     <img src="https://i.ibb.co/Hh4kF2b/icon.png" alt="Cover Image" width="200">
@@ -22,7 +22,7 @@
     </a>
 </p>
 <p align='center'>
-  FilmBee Bot provides high-speed stream links for Telegram files with support for Private Modes, Premium Access, and direct streaming.
+  File Stream Bot provides high-speed stream links for Telegram files with support for Private Modes, Premium Access, and direct streaming.
 </p>
 
 
