@@ -203,6 +203,12 @@
                             </div>
                             <span class="text-[10px] text-neutral-400">VLC</span>
                         </button>
+                        <button onclick="n_player()" class="flex flex-col items-center gap-1 group">
+                            <div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center group-active:scale-95 transition">
+                                <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" class="w-8 h-8 rounded-lg">
+                            </div>
+                            <span class="text-[10px] text-neutral-400">nPlayer</span>
+                        </button>
                     </div>
                 </div>
 
@@ -402,6 +408,7 @@
         function mx_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;end`; }
         function mx_pro_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;end`; }
         function mpvex_player() { window.location.href = `intent:${fileUrl}#Intent;action=android.intent.action.VIEW;package=app.marlboroadvance.mpvex;type=video/*;scheme=https;end`; }
+        function n_player() { window.location.href = `nplayer-${fileUrl}`; }
 
         // Boot
         initTmdb();
