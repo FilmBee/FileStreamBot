@@ -162,9 +162,34 @@ async def is_channel_banned(bot, message):
         return True
     return False
 
+#---------------------[ CHECK PRIVATE MODE ]---------------------#
+
+async def check_private_mode(bot, message):
+    user_id = message.from_user.id
+    
+    # If no groups are configured, strict block (unless Auth user, checked separately)
+    if not Telegram.ALLOWED_GROUPS:
+        return False
+
+    # Check if user is member of ANY allowed group
+    for chat_id in Telegram.ALLOWED_GROUPS:
+        try:
+            member = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
+            # Check for valid status (not left/kicked/banned)
+            if member.status not in ["kicked", "left", "banned"]:
+                return True
+        except Exception:
+            continue
+            
+    return False
+
 #---------------------[ USER AUTH ]---------------------#
 
 async def is_user_authorized(message):
+    """
+    Checks if user is OWNER or in AUTH_USERS.
+    Returns Boolean. Does NOT send rejection message.
+    """
     if hasattr(Telegram, 'AUTH_USERS') and Telegram.AUTH_USERS:
         user_id = message.from_user.id
 
@@ -174,45 +199,8 @@ async def is_user_authorized(message):
         if user_id in Telegram.AUTH_USERS:
             return True
         
-        # KEY CHANGE:
-        # If Private Mode is ON, we do NOT block yet. We return False to let verify_user check the groups.
-        if Telegram.PRIVATE_MODE:
-            return False
-
-        # If Private Mode is OFF, we block normally (Legacy Behavior).
-        await message.reply_text(
-            text="Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪᴢᴇᴅ ᴛᴏ ᴜsᴇ ᴛʜɪs ʙᴏᴛ.",
-            parse_mode=ParseMode.MARKDOWN,
-            disable_web_page_preview=True
-        )
         return False
 
-    return True
-
-#---------------------[ CHECK PRIVATE MODE ]---------------------#
-
-async def check_private_mode(bot, message):
-    user_id = message.from_user.id
-    
-    # If no groups are configured, strictly block since mode is ON but no access path exists
-    if not Telegram.ALLOWED_GROUPS:
-        return False
-
-    # Check if user is member of ANY allowed group
-    for chat_id in Telegram.ALLOWED_GROUPS:
-        try:
-            member = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
-            if member.status not in ["kicked", "left", "banned"]:
-                return True
-        except Exception:
-            continue
-            
-    await message.reply_text(
-        text=LANG.PREMIUM_TEXT,
-        parse_mode=ParseMode.HTML,
-        reply_markup=BUTTON.PREMIUM_BUTTONS,
-        disable_web_page_preview=True
-    )
     return False
 
 #---------------------[ USER EXIST ]---------------------#
@@ -234,23 +222,37 @@ async def is_channel_exist(bot, message):
             f"**#NᴇᴡCʜᴀɴɴᴇʟ** \n**⬩ ᴄʜᴀᴛ ɴᴀᴍᴇ :** `{message.chat.title}`\n**⬩ ᴄʜᴀᴛ ɪᴅ :** `{message.chat.id}`\n**⬩ ᴛᴏᴛᴀʟ ᴍᴇᴍʙᴇʀs :** `{members}`"
         )
 
+#---------------------[ VERIFY USER (MAIN LOGIC) ]---------------------#
+
 async def verify_user(bot, message):
     if await is_user_banned(message):
         return False
 
-    # 1. Check Auth (Admin/Auth Users)
-    if not await is_user_authorized(message):
-        # If this returns False, it means they are NOT authorized.
+    # --- PRIVATE MODE LOGIC ---
+    if Telegram.PRIVATE_MODE:
+        # If Mode is ON, we only allow:
+        # 1. Auth Users (Admins/VIPs)
+        # 2. Members of Allowed Groups
         
-        # 2. Check Private Mode
-        if Telegram.PRIVATE_MODE:
-            # Mode ON: Check Groups.
-            if not await check_private_mode(bot, message):
+        is_auth = await is_user_authorized(message)
+        if not is_auth:
+            # Not an Admin, so check if they are in the allowed groups
+            is_group_member = await check_private_mode(bot, message)
+            if not is_group_member:
+                # Failed both checks -> Send Premium Message and Block
+                await message.reply_text(
+                    text=LANG.PREMIUM_TEXT,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=BUTTON.PREMIUM_BUTTONS,
+                    disable_web_page_preview=True
+                )
                 return False
-        else:
-            # Mode OFF: Return False (The rejection msg was already sent in is_user_authorized)
-            return False
+    else:
+        # --- PUBLIC MODE ---
+        # If Private Mode is OFF, everyone is allowed.
+        pass
 
+    # --- LOGGING & FORCE SUB ---
     await is_user_exist(bot, message)
 
     if Telegram.FORCE_SUB:
