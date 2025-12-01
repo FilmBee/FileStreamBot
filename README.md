@@ -196,6 +196,6 @@ ALLOWED_GROUPS = -10012345678 -10087654321
 ### ❤️ Credits :
 
 - [**EithonX**](https://t.me/EithonX) : Developer & Owner
-
+- [**AvishkarPatil**](https://github.com/AvishkarPatil) : for his [FileStreamBot](https://github.com/AvishkarPatil/FileStreamBot)
 ---
 <h4 align='center'>© 2025 EithonX</h4>
