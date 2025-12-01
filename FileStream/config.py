@@ -25,6 +25,10 @@ class Telegram:
     MODE = env.get("MODE", "primary")
     SECONDARY = True if MODE.lower() == "secondary" else False
     AUTH_USERS = list(set(int(x) for x in str(env.get("AUTH_USERS", "")).split()))
+    
+    # Private Mode Config
+    PRIVATE_MODE = str(env.get("PRIVATE_MODE", "False")).lower() in ("true", "1", "t", "yes", "y")
+    ALLOWED_GROUPS = list(set(int(x) for x in str(env.get("ALLOWED_GROUPS", "")).split()))
 
 class Server:
     PORT = int(env.get("PORT", 8080))
@@ -36,6 +40,3 @@ class Server:
     URL = "http{}://{}{}/".format(
         "s" if HAS_SSL else "", FQDN, "" if NO_PORT else ":" + str(PORT)
     )
-
-
-

@@ -41,6 +41,11 @@ class LANG(object):
 
     BAN_TEXT = "__Sᴏʀʀʏ Sɪʀ, Yᴏᴜ ᴀʀᴇ Bᴀɴɴᴇᴅ ᴛᴏ ᴜsᴇ ᴍᴇ.__\n\n**[Cᴏɴᴛᴀᴄᴛ Dᴇᴠᴇʟᴏᴘᴇʀ](tg://user?id={}) Tʜᴇʏ Wɪʟʟ Hᴇʟᴘ Yᴏᴜ**"
 
+    PREMIUM_TEXT = """
+<b>🔒 Pʀᴇᴍɪᴜᴍ Aᴄᴄᴇss Oɴʟʏ</b>\n
+Yᴏᴜ ɴᴇᴇᴅ ᴀ <b>Pʀᴇᴍɪᴜᴍ Mᴇᴍʙᴇʀsʜɪᴘ</b> ᴛᴏ ᴜsᴇ ᴛʜɪs ʙᴏᴛ.\n
+<i>Cᴏɴᴛᴀᴄᴛ ᴛʜᴇ ᴀᴅᴍɪɴ ᴏʀ ᴠɪsɪᴛ ᴛʜᴇ ʟɪɴᴋ ʙᴇʟᴏᴡ ᴛᴏ ᴘᴜʀᴄʜᴀsᴇ ᴀᴄᴄᴇss.</i>\n
+"""
 
 class BUTTON(object):
     START_BUTTONS = InlineKeyboardMarkup(
@@ -69,4 +74,11 @@ class BUTTON(object):
         ],
             [InlineKeyboardButton("📢 ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ", url=f'https://t.me/{Telegram.UPDATES_CHANNEL}')]
         ]
+    )
+    
+    PREMIUM_BUTTONS = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton('🌟 Bᴜʏ Pʀᴇᴍɪᴜᴍ', url='https://t.me/Film_Bee'),
+            InlineKeyboardButton('ᴄʟᴏsᴇ', callback_data='close')
+        ]]
     )

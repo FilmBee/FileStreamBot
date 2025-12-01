@@ -1,7 +1,7 @@
 from pyrogram.errors import UserNotParticipant, FloodWait
 from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
-from FileStream.utils.translation import LANG
+from FileStream.utils.translation import LANG, BUTTON
 from FileStream.utils.database import Database
 from FileStream.utils.human_readable import humanbytes
 from FileStream.config import Telegram, Server
@@ -171,15 +171,49 @@ async def is_user_authorized(message):
         if user_id == Telegram.OWNER_ID:
             return True
 
-        if not (user_id in Telegram.AUTH_USERS):
-            await message.reply_text(
-                text="Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪᴢᴇᴅ ᴛᴏ ᴜsᴇ ᴛʜɪs ʙᴏᴛ.",
-                parse_mode=ParseMode.MARKDOWN,
-                disable_web_page_preview=True
-            )
+        if user_id in Telegram.AUTH_USERS:
+            return True
+        
+        # KEY CHANGE:
+        # If Private Mode is ON, we do NOT block yet. We return False to let verify_user check the groups.
+        if Telegram.PRIVATE_MODE:
             return False
 
+        # If Private Mode is OFF, we block normally (Legacy Behavior).
+        await message.reply_text(
+            text="Yᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴜᴛʜᴏʀɪᴢᴇᴅ ᴛᴏ ᴜsᴇ ᴛʜɪs ʙᴏᴛ.",
+            parse_mode=ParseMode.MARKDOWN,
+            disable_web_page_preview=True
+        )
+        return False
+
     return True
+
+#---------------------[ CHECK PRIVATE MODE ]---------------------#
+
+async def check_private_mode(bot, message):
+    user_id = message.from_user.id
+    
+    # If no groups are configured, strictly block since mode is ON but no access path exists
+    if not Telegram.ALLOWED_GROUPS:
+        return False
+
+    # Check if user is member of ANY allowed group
+    for chat_id in Telegram.ALLOWED_GROUPS:
+        try:
+            member = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
+            if member.status not in ["kicked", "left", "banned"]:
+                return True
+        except Exception:
+            continue
+            
+    await message.reply_text(
+        text=LANG.PREMIUM_TEXT,
+        parse_mode=ParseMode.HTML,
+        reply_markup=BUTTON.PREMIUM_BUTTONS,
+        disable_web_page_preview=True
+    )
+    return False
 
 #---------------------[ USER EXIST ]---------------------#
 
@@ -201,11 +235,21 @@ async def is_channel_exist(bot, message):
         )
 
 async def verify_user(bot, message):
-    if not await is_user_authorized(message):
-        return False
-
     if await is_user_banned(message):
         return False
+
+    # 1. Check Auth (Admin/Auth Users)
+    if not await is_user_authorized(message):
+        # If this returns False, it means they are NOT authorized.
+        
+        # 2. Check Private Mode
+        if Telegram.PRIVATE_MODE:
+            # Mode ON: Check Groups.
+            if not await check_private_mode(bot, message):
+                return False
+        else:
+            # Mode OFF: Return False (The rejection msg was already sent in is_user_authorized)
+            return False
 
     await is_user_exist(bot, message)
 
