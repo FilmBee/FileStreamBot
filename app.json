@@ -1,14 +1,15 @@
 {
   "name": "FileStreamBot",
-  "description": "A Telegram Bot to Convert Telegram Files To Direct & Streamable Links.",
+  "description": "A Telegram Bot to Stream Movies and Series directly via FilmBee.",
   "keywords": [
         "telegram",
         "files",
-        "stream"
+        "stream",
+        "filmbee"
     ],
-  "repository": "https://github.com/avipatilpro/FileStreamBot/",
+  "repository": "https://github.com/FilmBee/FileStreamBot",
   "success_url": "/",
-  "logo": "https://i.ibb.co/ZJzJ9Hq/link-3x.png",
+  "logo": "https://i.ibb.co/Hh4kF2b/icon.png",
   "env": {
     "ENV": {
       "description": "Set this to True if you don't want to crash the bot",
@@ -24,10 +25,10 @@
       "description": "Get this value from @BotFather"
     },
     "FLOG_CHANNEL": {
-      "description": "ID of Channel Where store files sent by users. Read the readme for more info about this var"
+      "description": "ID of Channel Where store files sent by users."
     },
     "ULOG_CHANNEL": {
-      "description": "ID of Channel Where store New Users data. Read the readme for more info about this var"
+      "description": "ID of Channel Where store New Users data."
     },
     "OWNER_ID": {
       "description": "Your Telegram User ID as Owner"
@@ -36,8 +37,17 @@
       "description": "MongoDB URI for saving User Data and Files List created by user."
     },
     "AUTH_USERS": {
-      "description": "Put IDs of Auth Usrs where bot will work. You can add multiple IDs & separate with Space.",
+      "description": "Put IDs of Auth Users where bot will work. You can add multiple IDs & separate with Space.",
       "required": false
+    },
+    "PRIVATE_MODE": {
+        "description": "Set to True to restrict bot to Allowed Groups only. Set False for Public access.",
+        "value": "False",
+        "required": false
+    },
+    "ALLOWED_GROUPS": {
+        "description": "Space separated IDs of Channels/Groups allowed in Private Mode (e.g., -100123456 -100987654)",
+        "required": false
     },
     "UPDATES_CHANNEL": {
       "description": "Channel Username without `@` to set channel as Update Channel",

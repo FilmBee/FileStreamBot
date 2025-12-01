@@ -1,15 +1,15 @@
-<h1 align="center">FileStreamBot</h1>
+<h1 align="center">FilmBee Bot</h1>
 <p align="center">
-  <a href="https://github.com/Avipatilpro/FileStreamBot">
-    <img src="https://graph.org/file/80d1f94e81bbc1acadb36.jpg" alt="Cover Image" width="550">
+  <a href="https://t.me/EithonX">
+    <img src="https://i.ibb.co/Hh4kF2b/icon.png" alt="Cover Image" width="200">
   </a>
 </p>  
   <p align="center">
    </strong></a>
     <br><b>
-    <a href="https://github.com/Avipatilpro/FileStreamBot/issues">Report a Bug</a>
+    <a href="https://t.me/EithonX">Report a Bug</a>
     |
-    <a href="https://github.com/Avipatilpro/FileStreamBot/issues">Request Feature</a></b>
+    <a href="https://t.me/EithonX">Request Feature</a></b>
   </p>
 
 
@@ -17,12 +17,12 @@
 ### 🍁 About :
 
 <p align="center">
-    <a href="https://github.com/Avipatilpro/FileStreamBot">
-        <img src="https://i.ibb.co/ZJzJ9Hq/link-3x.png" height="100" width="100" alt="FileStreamBot Logo">
+    <a href="https://github.com/FilmBee/FileStreamBot">
+        <img src="https://i.ibb.co/Hh4kF2b/icon.png" height="100" width="100" alt="FilmBee Logo">
     </a>
 </p>
 <p align='center'>
-  This bot provides stream links for Telegram files without the necessity of waiting for the download to complete, offering the ability to store files.
+  FilmBee Bot provides high-speed stream links for Telegram files with support for Private Modes, Premium Access, and direct streaming.
 </p>
 
 
@@ -49,8 +49,8 @@
 <br>
 
 ```sh
-git clone https://github.com/avipatilpro/FileStreamBot
-cd FileStreamBot
+git clone https://github.com/FilmBee/FileStreamBot
+cd FilmBee
 python3 -m venv ./venv
 . ./venv/bin/activate
 pip install -r requirements.txt
@@ -74,9 +74,10 @@ python3 -m FileStream
   <summary><b>Deploy using Docker :</b></summary>
 <br>
 * Clone the repository:
+
 ```sh
-git clone https://github.com/avipatilpro/FileStreamBot
-cd FileStreamBot
+git clone https://github.com/FilmBee/FileStreamBot
+cd FilmBee
 ```
 * Build own Docker image:
 ```sh
@@ -118,6 +119,8 @@ MULTI_TOKEN1 = 12345678:bot_token_multi_client_1
 MULTI_TOKEN2 = 12345678:bot_token_multi_client_2
 OWNER_ID = 987456321
 PORT = 8080
+PRIVATE_MODE = True
+ALLOWED_GROUPS = -10012345678 -10087654321
 ```
 </details>
 
@@ -137,6 +140,11 @@ PORT = 8080
 * `DATABASE_URL`: MongoDB URI for saving User Data and Files List created by user. `str`
 * `FQDN`: A Fully Qualified Domain Name if present without http/s. Defaults to `BIND_ADDRESS`. `str`
 
+#### 🔒 Private Mode Vars :
+* `PRIVATE_MODE`: Set to `True` to enable restrictions (users must be in allowed groups). Set `False` for Public mode. `bool`
+* `ALLOWED_GROUPS`: Space separated IDs of Channels/Groups allowed in Private Mode. `str`
+* `AUTH_USERS`: Put authorized user IDs (Admins/VIPs) who bypass restrictions, separated by <kbd>Space</kbd>. `int`
+
 #### 🗼 MultiClient Vars :
 * `MULTI_TOKEN1`: Add your first bot token or session strings here. `str`
 * `MULTI_TOKEN2`: Add your second bot token or session strings here. `str`
@@ -146,7 +154,6 @@ PORT = 8080
 * `UPDATES_CHANNEL`: Channel Username without `@` to set channel as Update Channel `str`
 * `FORCE_SUB_ID`: Force Sub Channel ID, if you want to use Force Sub. start with `-100` `int
 * `FORCE_SUB`: Set to True, so every user have to Join update channel to use the bot. `bool`
-* `AUTH_USERS`: Put authorized user IDs to use bot, separated by <kbd>Space</kbd>. `int`
 * `SLEEP_THRESHOLD`: Set global flood wait threshold, auto-retry requests under 60s. `int`
 * `SESSION_NAME`: Name for the Database created on your MongoDB. Defaults to `FileStream`. `str`
 * `FILE_PIC`: To set Image at `/files` command. Defaults to pre-set image. `str`
@@ -186,15 +193,9 @@ PORT = 8080
 
 </details>
 
-### ❤️ Thanks To :
+### ❤️ Credits :
 
-- [**Me**](https://github.com/AvishkarPatil) : Owner of This FileStreamBot
-- [**Deekshith SH**](https://github.com/DeekshithSH) : for some modules.
-- [**EverythingSuckz**](https://github.com/EverythingSuckz) : for his [FileStreamBot](https://github.com/EverythingSuckz/FileStreamBot)
-- [**Biisal**](https://github.com/biisal) : for Stream Page UI
+- [**EithonX**](https://t.me/EithonX) : Developer & Owner
 
 ---
-<h4 align='center'>© 2024 Aνιѕнкαя Pαтιℓ</h4>
-
-
-
+<h4 align='center'>© 2025 EithonX</h4>

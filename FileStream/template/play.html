@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FileStreamBot | {{file_name}}</title>
+    <title>FilmBee | {{file_name}}</title>
     <link rel="icon" href="https://i.ibb.co/Hh4kF2b/icon.png" type="image/x-icon">
     <link rel="shortcut icon" href="https://i.ibb.co/Hh4kF2b/icon.png" type="image/x-icon">
     <link rel="stylesheet" href="https://unpkg.com/sheryjs/dist/Shery.css" />
@@ -33,7 +33,7 @@
     <center>
         <div class="about-nav">
             <a href="#abtus" class="wlcm magnet" onclick="toggleWidth(this)">WELCOME</a>
-            <a href="#channels" class="abt-chnl magnet" onclick="toggleWidth(this)">CHANNELS</a>
+            <a href="#channels" class="abt-chnl magnet" onclick="toggleWidth(this)">LINKS</a>
             <a href="#contact" class="magnet contact-btn" onclick="toggleWidth(this)">CONTACT</a>
         </div>
     </center>
@@ -57,6 +57,9 @@
                     <button class="magnet" onclick="copyStreamLink()">
                         <img src="https://i.ibb.co/CM4Y586/link.png" alt="Copy Link">copy link
                     </button>
+                    <button class="magnet" onclick="mpvex_player()">
+                        <img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" alt="">watch in MPVEx
+                    </button>
                     <button class="magnet" onclick="vlc_player()">
                         <img src="https://i.ibb.co/px6fQs1/vlc.png" alt="">watch in VLC PLAYER
                     </button>
@@ -74,31 +77,28 @@
                     <div class="about-dets">
 
                         <div class="abt-sec" id="abtus" style="padding: 160px 30px;">
-                            <h1 style="text-align: center;">WELCOME TO OUR <Span>FILE STREAM</Span> BOT</h1>
+                            <h1 style="text-align: center;">WELCOME TO <Span>FILM BEE</Span></h1>
                             <p style="text-align: center; line-height: 2;word-spacing: 2px;  letter-spacing: 0.8px;">
                                 This is a Telegram Bot to Stream <span>Movies</span> and <span>Series</span> directly on
                                 Telegram. You can also
                                 <span>download</span> them if you want. This bot is developed by <a
-                                    href="https://github.com/AviPatilPro"><span style="font-weight: 700;">Avi</span></a>
+                                    href="https://t.me/EithonX"><span style="font-weight: 700;">EithonX</span></a>
                                 <br><br>If you like this bot, then don't
                                 forget to share it with your friends and family.
                             </p>
                         </div>
 
                         <div class="abt-sec" id="channels">
-                            <h1>JOIN OUR <span>TELEGRAM</span> CHANNELS</h1>
+                            <h1>IMPORTANT <span>LINKS</span></h1>
                             <div class="links chnl-link">
-                                <a class="magnet" href="https://t.me/CheapieDeals">
-                                    <button>CHEAP DEALS</button>
+                                <a class="magnet" href="https://link.filmbee.workers.dev/premium">
+                                    <button>BUY PREMIUM</button>
                                 </a>
-                                <a class="magnet" href="https://t.me/FilmyPixel">
-                                    <button>FILMYPIXEL</button>
+                                <a class="magnet" href="https://link.filmbee.workers.dev/support">
+                                    <button>SUPPORT CHAT</button>
                                 </a>
-                                <a class="magnet" href="https://t.me/PostersZone">
-                                    <button>POSTERS ZONE</button>
-                                </a>
-                                <a class="magnet" href="https://t.me/EpitomeQuality">
-                                    <button>EPITOME QUALITY</button>
+                                <a class="magnet" href="https://link.filmbee.workers.dev/bot">
+                                    <button>SEARCH BOT</button>
                                 </a>
                             </div>
                         </div>
@@ -106,8 +106,8 @@
                         <div class="abt-sec" id="contact">
                             <p style="text-align: center;">Report Bugs and Contact us on Telegram Below</p>
                             <div class="links contact">
-                                <a href="https://t.me/AvishkarPatil">
-                                    <button>CONTACT</button>
+                                <a href="https://t.me/EithonX">
+                                    <button>CONTACT DEV</button>
                                 </a>
                             </div>
                         </div>
@@ -142,8 +142,8 @@
 
             <center>
                 <div class="copyright">
-                    <h5 class="text-center">Copyright © 2024 <a href="https://github.com/AviPatilPro"><span
-                                style="font-weight: 700;">Avishkar Patil</span></a>. All
+                    <h5 class="text-center">Copyright © 2025 <a href="https://t.me/EithonX"><span
+                                style="font-weight: 700;">EithonX</span></a>. All
                         Rights Reserved.</h5>
                 </div>
             </center>
@@ -160,10 +160,20 @@
     document.addEventListener("DOMContentLoaded", function () {
         const uncopyableElement = document.querySelector(".uncopyable");
 
-        uncopyableElement.addEventListener("selectstart", function (event) {
-            event.preventDefault();
-        });
+        if (uncopyableElement) {
+            uncopyableElement.addEventListener("selectstart", function (event) {
+                event.preventDefault();
+            });
+        }
     });
+
+    // Added MPVEx Player Function
+    function mpvex_player() {
+        var url = document.getElementById("player").src;
+        // Construct the intent for app.marlboroadvance.mpvex
+        var intent = "intent:" + url + "#Intent;package=app.marlboroadvance.mpvex;type=video/*;scheme=https;end";
+        window.location.href = intent;
+    }
 </script>
 <script src="https://cdn.plyr.io/3.6.9/plyr.js"></script>
 <script src="https://proavipatil.github.io/data/fs/src/script.js"></script>

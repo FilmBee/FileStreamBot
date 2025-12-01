@@ -19,7 +19,7 @@ class LANG(object):
     ABOUT_TEXT = """
 <b>⚜ ᴍʏ ɴᴀᴍᴇ : {}</b>\n
 <b>✦ ᴠᴇʀsɪᴏɴ : {}</b>
-<b>✦ ᴜᴘᴅᴀᴛᴇᴅ ᴏɴ : 06-January-2024</b>
+<b>✦ ᴜᴘᴅᴀᴛᴇᴅ ᴏɴ : 01-December-2025</b>
 <b>✦ ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/EithonX'>EithonX</a></b>\n
 """
 
