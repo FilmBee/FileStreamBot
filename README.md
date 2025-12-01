@@ -50,7 +50,7 @@
 
 ```sh
 git clone https://github.com/FilmBee/FileStreamBot
-cd FilmBee
+cd FileStreamBot
 python3 -m venv ./venv
 . ./venv/bin/activate
 pip install -r requirements.txt
@@ -77,7 +77,7 @@ python3 -m FileStream
 
 ```sh
 git clone https://github.com/FilmBee/FileStreamBot
-cd FilmBee
+cd FileStreamBot
 ```
 * Build own Docker image:
 ```sh
