@@ -113,12 +113,12 @@
             backdrop-filter: blur(12px);
         }
 
-        /* MX Player Dropdown Styles (fixed) */
+        /* MX Player Dropdown Styles */
         .mx-dropdown {
             position: absolute;
             bottom: calc(100% + 8px);
-            left: 0; /* Changed from 50% to 0 to prevent left-side cutoff */
-            transform: translateY(10px); /* Removed translateX(-50%) */
+            left: 0;
+            transform: translateY(10px);
             background: rgba(23, 23, 23, 0.98);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
@@ -134,7 +134,7 @@
 
         .mx-dropdown.active {
             opacity: 1;
-            transform: translateY(0); /* Removed translateX(-50%) */
+            transform: translateY(0);
             pointer-events: all;
         }
 
@@ -172,11 +172,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Small improvements to "Open With" area layout */
-        #android-players {
-            display: none; /* toggled via script if Android */
-        }
-
+        /* --- PLAYERS GRID --- */
         .players-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0,1fr));
@@ -206,11 +202,13 @@
             display:flex;
             align-items:center;
             justify-content:center;
+            overflow: hidden;
         }
-
+        
         .player-label {
             font-size: 10px;
             color: #b3b3b3;
+            white-space: nowrap;
         }
 
     </style>
@@ -270,56 +268,14 @@
                     </button>
                 </div>
 
-                <div id="android-players" class="space-y-3">
+                <div id="external-players" class="hidden space-y-3">
                     <div class="flex items-center gap-2 text-xs font-bold text-neutral-500 uppercase tracking-wider">
                         <span>Open With App</span>
                         <div class="h-px flex-grow bg-white/10"></div>
                     </div>
                     
-                    <div class="players-grid">
-                        <div class="relative w-full flex items-start justify-center">
-                            <div id="mx-container" class="relative">
-                                <button id="mx-toggle" class="player-btn" aria-haspopup="true" aria-expanded="false">
-                                    <div class="player-icon">
-                                        <img src="https://i.ibb.co/41WvtQ3/mx.png" class="w-8 h-8 rounded-lg" alt="MX">
-                                    </div>
-                                    <span class="player-label">MX Player</span>
-                                </button>
-
-                                <div class="mx-dropdown" id="mx-dropdown" role="menu" aria-hidden="true">
-                                    <div class="mx-option" role="menuitem" onclick="mx_pro_player(); closeMxDropdown();">
-                                        <span class="mx-option-label">MX Player Pro</span>
-                                        <span class="mx-option-type">Premium</span>
-                                    </div>
-                                    <div class="mx-option" role="menuitem" onclick="mx_player(); closeMxDropdown();">
-                                        <span class="mx-option-label">MX Player</span>
-                                        <span class="mx-option-type">Free</span>
-                                    </div>
-                                </div>
-                            </div>
+                    <div id="players-container" class="players-grid">
                         </div>
-
-                        <button onclick="vlc_player()" class="player-btn" title="Open in VLC">
-                            <div class="player-icon">
-                                <img src="https://i.ibb.co/px6fQs1/vlc.png" class="w-8 h-8 rounded-lg" alt="VLC">
-                            </div>
-                            <span class="player-label">VLC</span>
-                        </button>
-
-                        <button onclick="mpvex_player()" class="player-btn" title="Open in MPVEx">
-                            <div class="player-icon">
-                                <img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" class="w-8 h-8 rounded-lg" alt="MPVEx">
-                            </div>
-                            <span class="player-label">MPVEx</span>
-                        </button>
-
-                        <button onclick="n_player()" class="player-btn" title="Open in nPlayer">
-                            <div class="player-icon">
-                                <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" class="w-8 h-8 rounded-lg" alt="nPlayer">
-                            </div>
-                            <span class="player-label">nPlayer</span>
-                        </button>
-                    </div>
                 </div>
 
                 <div class="p-5 rounded-2xl bg-gradient-to-br from-neutral-900 to-black border border-white/10 text-center relative overflow-hidden">
@@ -387,60 +343,144 @@
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // --- 1. ENVIRONMENT DETECTION ---
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        const androidPlayersEl = document.getElementById('android-players');
-        if (isAndroid && androidPlayersEl) {
-            androidPlayersEl.style.display = 'block';
-        }
-
-        // --- 2. PLAYER SETUP ---
+        // --- 1. PLAYER SETUP ---
         const player = new Plyr('#player', {
             controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'],
             resetOnEnd: true,
         });
         const fileUrl = "{{file_url}}";
 
+        // Fullscreen orientation lock for mobile
         player.on('enterfullscreen', () => {
-            if (isAndroid && screen.orientation && screen.orientation.lock) {
-                try {
-                    screen.orientation.lock('landscape').catch(e => {});
-                } catch(e) {}
+            if (screen.orientation && screen.orientation.lock) {
+                try { screen.orientation.lock('landscape').catch(e => {}); } catch(e) {}
             }
         });
 
-        // --- 3. MX PLAYER DROPDOWN LOGIC (IMPROVED) ---
-        const mxToggle = document.getElementById('mx-toggle');
-        const mxDropdown = document.getElementById('mx-dropdown');
-        const mxContainer = document.getElementById('mx-container');
+        // --- 2. DYNAMIC PLATFORM PLAYERS ---
+        function initExternalPlayers() {
+            var ua = navigator.userAgent || navigator.vendor || window.opera;
+            
+            // Detect iOS (including iPadOS 13+ which requests desktop site by default)
+            var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            if (!isIOS && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) {
+                isIOS = true;
+            }
 
-        function openMxDropdown() {
-            mxDropdown.classList.add('active');
-            mxDropdown.setAttribute('aria-hidden', 'false');
-            mxToggle.setAttribute('aria-expanded', 'true');
+            // Detect Android
+            var isAndroid = /android/i.test(ua);
+
+            var container = document.getElementById('external-players');
+            var grid = document.getElementById('players-container');
+
+            // STRICTLY show only if OS is confirmed. 
+            // This hides it on Desktop browsers even if window size is small.
+            if (isIOS) {
+                container.classList.remove('hidden');
+                grid.innerHTML = `
+                    <button onclick="vlc_ios()" class="player-btn" title="Open in VLC">
+                        <div class="player-icon"><img src="https://i.ibb.co/px6fQs1/vlc.png" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">VLC</span>
+                    </button>
+                    <button onclick="infuse_ios()" class="player-btn" title="Open in Infuse">
+                        <div class="player-icon"><img src="https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/4c/a3/67/4ca367e6-3429-64d7-8ade-511a395a16b0/Placeholder.mill/400x400bb-75.webp" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">Infuse</span>
+                    </button>
+                    <button onclick="outplayer_ios()" class="player-btn" title="Open in Outplayer">
+                        <div class="player-icon"><img src="https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/e4/fb/94/e4fb94bb-9c6f-9aca-05c4-68ac78bae7eb/Placeholder.mill/400x400bb-75.webp" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">Outplayer</span>
+                    </button>
+                    <button onclick="n_player_ios()" class="player-btn" title="Open in nPlayer">
+                        <div class="player-icon"><img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">nPlayer</span>
+                    </button>
+                `;
+            } else if (isAndroid) {
+                container.classList.remove('hidden');
+                grid.innerHTML = `
+                    <div class="relative w-full flex items-start justify-center">
+                        <div id="mx-container" class="relative">
+                            <button id="mx-toggle" class="player-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleMxDropdown(event)">
+                                <div class="player-icon"><img src="https://i.ibb.co/41WvtQ3/mx.png" class="w-8 h-8 rounded-lg"></div>
+                                <span class="player-label">MX Player</span>
+                            </button>
+                            <div class="mx-dropdown" id="mx-dropdown" role="menu" aria-hidden="true">
+                                <div class="mx-option" role="menuitem" onclick="mx_pro_player(); closeMxDropdown();">
+                                    <span class="mx-option-label">MX Player Pro</span><span class="mx-option-type">Premium</span>
+                                </div>
+                                <div class="mx-option" role="menuitem" onclick="mx_player(); closeMxDropdown();">
+                                    <span class="mx-option-label">MX Player</span><span class="mx-option-type">Free</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="vlc_android()" class="player-btn" title="Open in VLC">
+                        <div class="player-icon"><img src="https://i.ibb.co/px6fQs1/vlc.png" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">VLC</span>
+                    </button>
+                    <button onclick="mpvex_android()" class="player-btn" title="Open in MPVEx">
+                        <div class="player-icon"><img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">MPVEx</span>
+                    </button>
+                    <button onclick="n_player_android()" class="player-btn" title="Open in nPlayer">
+                        <div class="player-icon"><img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" class="w-8 h-8 rounded-lg"></div>
+                        <span class="player-label">nPlayer</span>
+                    </button>
+                `;
+            }
+            // If Desktop (neither iOS nor Android), do nothing (keep hidden)
         }
+
+        // --- 3. INTENT HANDLERS ---
+        
+        // iOS Intents
+        function vlc_ios() { window.location.href = `vlc-x-callback://x-callback-url/stream?url=${fileUrl}`; }
+        function infuse_ios() { window.location.href = `infuse://x-callback-url/play?url=${fileUrl}`; }
+        function outplayer_ios() { window.location.href = `outplayer://${fileUrl}`; }
+        function n_player_ios() { window.location.href = `nplayer-${fileUrl}`; }
+
+        // Android Intents
+        function vlc_android() { window.location.href = `intent:${fileUrl}#Intent;package=org.videolan.vlc;type=video/*;end`; }
+        function mx_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;end`; }
+        function mx_pro_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;end`; }
+        function mpvex_android() { window.location.href = `intent:${fileUrl}#Intent;package=app.marlboroadvance.mpvex;type=video/*;end`; }
+        function n_player_android() { window.location.href = `intent:${fileUrl}#Intent;package=com.newin.nplayer.pro;type=video/*;end`; }
+
+
+        // --- 4. UI UTILS ---
+        
+        // MX Dropdown logic
         function closeMxDropdown() {
-            mxDropdown.classList.remove('active');
-            mxDropdown.setAttribute('aria-hidden', 'true');
-            mxToggle.setAttribute('aria-expanded', 'false');
+            const d = document.getElementById('mx-dropdown');
+            if(d) d.classList.remove('active');
         }
-
         function toggleMxDropdown(e) {
-            e && e.stopPropagation();
-            if (mxDropdown.classList.contains('active')) closeMxDropdown();
-            else openMxDropdown();
+            e.stopPropagation();
+            const d = document.getElementById('mx-dropdown');
+            if(d) d.classList.toggle('active');
+        }
+        document.addEventListener('click', () => closeMxDropdown());
+
+        // Copy Link
+        async function copyStreamLink() {
+            try {
+                await navigator.clipboard.writeText(fileUrl);
+                const btn = document.getElementById("copyBtn");
+                const og = btn.innerHTML;
+                btn.innerHTML = `<span class="text-green-400 font-bold">Copied!</span>`;
+                setTimeout(() => btn.innerHTML = og, 2000);
+            } catch (e) {}
+        }
+        
+        // Download
+        function streamDownload() {
+            const a = document.createElement('a');
+            a.href = fileUrl; a.download = "{{file_name}}";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        if (mxToggle) {
-            mxToggle.addEventListener('click', toggleMxDropdown);
-            // prevent clicks on the dropdown itself from closing immediately
-            mxDropdown.addEventListener('click', (ev) => ev.stopPropagation());
-            // close when clicking anywhere else or pressing Escape
-            document.addEventListener('click', () => { if (mxDropdown.classList.contains('active')) closeMxDropdown(); });
-            document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeMxDropdown(); });
-        }
-
-        // --- 4. API FETCH ---
+        // --- 5. TMDB API ---
         const _k = "6abcb6bb99fb77f33c37016a28866ed2";
         const BASE_IMG = 'https://image.tmdb.org/t/p/w500';
 
@@ -449,9 +489,7 @@
             try {
                 const res = await fetch(`https://api.themoviedb.org/3/trending/all/week?api_key=${_k}`);
                 const data = await res.json();
-                
                 const items = data.results.sort(() => 0.5 - Math.random()).slice(0, 12);
-                
                 grid.innerHTML = '';
                 
                 items.forEach((item, i) => {
@@ -460,17 +498,14 @@
                     const date = isMovie ? item.release_date : item.first_air_date;
                     const year = date ? date.split('-')[0] : '2025';
                     const typeLabel = isMovie ? 'Movie' : 'Series';
-                    
                     const poster = item.poster_path ? BASE_IMG + item.poster_path : 'https://i.ibb.co/Hh4kF2b/icon.png';
                     const rating = item.vote_average?.toFixed(1) || 'HD';
-                    
                     const delay = i * 50;
 
                     const card = document.createElement('div');
                     card.className = 'flex-shrink-0 w-36 sm:w-44 snap-start cursor-pointer group relative';
                     card.style.animation = `fadeUp 0.6s ease forwards ${delay}ms`;
                     card.style.opacity = '0';
-
                     card.innerHTML = `
                         <div class="poster-card relative rounded-xl overflow-hidden bg-white/5 select-none h-full border border-white/5">
                             <div class="aspect-[2/3] relative">
@@ -492,61 +527,23 @@
                     card.onclick = () => openModal(title);
                     grid.appendChild(card);
                 });
-
                 const s = document.createElement('style');
                 s.innerHTML = `@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`;
                 document.head.appendChild(s);
-
             } catch (e) {
-                console.error(e);
                 grid.innerHTML = `<div class="col-span-full py-8 text-center text-sm text-neutral-500">Trending content unavailable</div>`;
             }
         }
 
-        // --- 5. MODAL LOGIC ---
+        // --- 6. MODAL ---
         const modal = document.getElementById('premiumModal');
         const modalTitle = document.getElementById('modalMovieName');
+        function openModal(title) { modalTitle.innerText = title; modal.classList.remove('hidden'); modal.classList.add('flex'); }
+        function closeModal() { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        modal.onclick = (e) => { if (e.target === modal) closeModal(); }
 
-        function openModal(title) { 
-            modalTitle.innerText = title; 
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeModal() { 
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        modal.onclick = (e) => { 
-            if (e.target === modal || e.target.id === 'premiumModal') closeModal(); 
-        }
-
-        // --- 6. ACTIONS ---
-        function streamDownload() {
-            const a = document.createElement('a');
-            a.href = fileUrl; a.download = "{{file_name}}";
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        }
-
-        async function copyStreamLink() {
-            try {
-                await navigator.clipboard.writeText(fileUrl);
-                const btn = document.getElementById("copyBtn");
-                const og = btn.innerHTML;
-                btn.innerHTML = `<span class="text-green-400 font-bold">Copied!</span>`;
-                setTimeout(() => btn.innerHTML = og, 2000);
-            } catch (e) {}
-        }
-
-        // --- 7. INTENTS ---
-        function vlc_player() { window.location.href = `intent:${fileUrl}#Intent;package=org.videolan.vlc;type=video/*;end`; }
-        function mx_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;end`; }
-        function mx_pro_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;end`; }
-        function mpvex_player() { window.location.href = `intent:${fileUrl}#Intent;package=app.marlboroadvance.mpvex;type=video/*;end`; }
-        function n_player() { window.location.href = `nplayer-${fileUrl}`; }
-
-        // Boot
+        // BOOT
+        initExternalPlayers(); // Load buttons
         initTmdb();
     </script>
 </body>
