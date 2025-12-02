@@ -117,8 +117,8 @@
         .mx-dropdown {
             position: absolute;
             bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%) translateY(10px);
+            left: 0; /* Changed from 50% to 0 to prevent left-side cutoff */
+            transform: translateY(10px); /* Removed translateX(-50%) */
             background: rgba(23, 23, 23, 0.98);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
@@ -134,7 +134,7 @@
 
         .mx-dropdown.active {
             opacity: 1;
-            transform: translateX(-50%) translateY(0);
+            transform: translateY(0); /* Removed translateX(-50%) */
             pointer-events: all;
         }
 
@@ -277,7 +277,6 @@
                     </div>
                     
                     <div class="players-grid">
-                        <!-- MX Player (with dropdown) -->
                         <div class="relative w-full flex items-start justify-center">
                             <div id="mx-container" class="relative">
                                 <button id="mx-toggle" class="player-btn" aria-haspopup="true" aria-expanded="false">
@@ -300,7 +299,6 @@
                             </div>
                         </div>
 
-                        <!-- VLC Player -->
                         <button onclick="vlc_player()" class="player-btn" title="Open in VLC">
                             <div class="player-icon">
                                 <img src="https://i.ibb.co/px6fQs1/vlc.png" class="w-8 h-8 rounded-lg" alt="VLC">
@@ -308,7 +306,6 @@
                             <span class="player-label">VLC</span>
                         </button>
 
-                        <!-- MPVEx Player -->
                         <button onclick="mpvex_player()" class="player-btn" title="Open in MPVEx">
                             <div class="player-icon">
                                 <img src="https://apt.izzysoft.de/fdroid/repo/app.marlboroadvance.mpvex/en-US/icon.png" class="w-8 h-8 rounded-lg" alt="MPVEx">
@@ -316,7 +313,6 @@
                             <span class="player-label">MPVEx</span>
                         </button>
 
-                        <!-- nPlayer -->
                         <button onclick="n_player()" class="player-btn" title="Open in nPlayer">
                             <div class="player-icon">
                                 <img src="https://i.ibb.co/Hd2dS4t/nPlayer.png" class="w-8 h-8 rounded-lg" alt="nPlayer">
@@ -535,7 +531,7 @@
 
         async function copyStreamLink() {
             try {
-                await navigator.clipboard.writeText(window.location.href);
+                await navigator.clipboard.writeText(fileUrl);
                 const btn = document.getElementById("copyBtn");
                 const og = btn.innerHTML;
                 btn.innerHTML = `<span class="text-green-400 font-bold">Copied!</span>`;
@@ -544,10 +540,10 @@
         }
 
         // --- 7. INTENTS ---
-        function vlc_player() { window.location.href = `vlc://${fileUrl}`; }
+        function vlc_player() { window.location.href = `intent:${fileUrl}#Intent;package=org.videolan.vlc;type=video/*;end`; }
         function mx_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;type=video/*;end`; }
         function mx_pro_player() { window.location.href = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.pro;type=video/*;end`; }
-        function mpvex_player() { window.location.href = `intent:${fileUrl}#Intent;action=android.intent.action.VIEW;package=app.marlboroadvance.mpvex;type=video/*;scheme=https;end`; }
+        function mpvex_player() { window.location.href = `intent:${fileUrl}#Intent;package=app.marlboroadvance.mpvex;type=video/*;end`; }
         function n_player() { window.location.href = `nplayer-${fileUrl}`; }
 
         // Boot
