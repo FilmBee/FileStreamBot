@@ -6,6 +6,7 @@ import traceback
 import secrets
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
+from pyrogram.enums import ParseMode
 from FileStream.bot import multi_clients, work_loads, FileStream
 from FileStream.config import Telegram, Server
 from FileStream.server.exceptions import FIleNotFound, InvalidHash
@@ -13,7 +14,7 @@ from FileStream import utils, StartTime, __version__
 from FileStream.utils.render_template import render_page
 from FileStream.utils.database import Database
 from FileStream.utils.human_readable import humanbytes
-from FileStream.utils.file_properties import get_file_info
+from FileStream.utils.file_properties import get_file_info, update_file_id
 
 db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 routes = web.RouteTableDef()
@@ -67,7 +68,7 @@ async def stream_handler(request: web.Request):
         raise web.HTTPInternalServerError(text=str(e))
 
 # ---------------------------------------------------------------------------------------------------------
-# Secure API Endpoint (Refined for Cross-Bot Access)
+# Secure API Endpoint
 # ---------------------------------------------------------------------------------------------------------
 
 @routes.post("/api/v1/generate")
@@ -106,7 +107,7 @@ async def api_generate_handler(request: web.Request):
             file_info = await db.get_file(db_id)
         
         elif "msg_info" in data:
-            # Register new file by fetching message (Solving access_hash issue)
+            # Register new file
             msg_data = data["msg_info"]
             chat_id = msg_data.get("chat_id")
             message_id = msg_data.get("message_id")
@@ -115,29 +116,46 @@ async def api_generate_handler(request: web.Request):
                 return web.json_response({"status": "error", "message": "msg_info requires 'chat_id' and 'message_id'"}, status=400)
 
             try:
-                # 1. FileStreamBot fetches the message from the source channel
+                # 1. Fetch message from source
                 msg = await FileStream.get_messages(chat_id, message_id)
-                
                 if not msg or not msg.media:
                      return web.json_response({"status": "error", "message": "Message not found or has no media."}, status=404)
 
-                # 2. IMPORTANT: Copy the message to the Bot's Log Channel (FLOG_CHANNEL)
-                # This ensures the bot has a permanent reference and valid access hash for itself.
+                # 2. Copy to Log Channel (Once)
                 if not Telegram.FLOG_CHANNEL:
                      return web.json_response({"status": "error", "message": "FLOG_CHANNEL is not set in config."}, status=500)
 
                 copied_msg = await msg.copy(Telegram.FLOG_CHANNEL)
 
-                # 3. Extract clean file info from the COPIED message (which belongs to the bot now)
+                # 3. Add to DB
                 f_info = get_file_info(copied_msg)
-                
-                # 4. Add to DB (db.add_file handles duplication via file_unique_id)
                 db_id = await db.add_file(f_info)
+
+                # 4. Add "Requested by" Tag (Standard ID format)
+                # We do this here so it looks exactly like a normal user request
+                try:
+                    await copied_msg.reply_text(
+                        text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** API/System \n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
+                        disable_web_page_preview=True,
+                        parse_mode=ParseMode.MARKDOWN,
+                        quote=True
+                    )
+                except Exception:
+                    pass
+
+                # 5. [CRITICAL] Update File IDs Immediately
+                # This tells the system "The file is already in the channel".
+                # It prevents the bot from re-sending the file when you click the link.
+                file_ids = await update_file_id(copied_msg.id, multi_clients)
+                await db.update_file_ids(db_id, file_ids)
+                
+                # Reload to get the full object
                 file_info = await db.get_file(db_id)
                 
             except Exception as e:
                 logging.error(f"API Fetch Error: {e}")
-                return web.json_response({"status": "error", "message": f"Error processing file. Ensure Bot is Admin in source channel. details: {str(e)}"}, status=400)
+                traceback.print_exc()
+                return web.json_response({"status": "error", "message": f"Error processing file: {str(e)}"}, status=400)
             
         else:
              return web.json_response({"status": "error", "message": "Request must contain '_id' or 'msg_info'."}, status=400)

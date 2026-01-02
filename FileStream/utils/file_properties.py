@@ -127,16 +127,15 @@ async def update_file_id(msg_id, multi_clients):
 
 
 async def send_file(client: Client, db_id, file_id: str, message):
-    # Check if message is a real instance or just a class/dummy
+    # Fallback for API calls where message is not a valid User Message
     if isinstance(message, Message):
         file_caption = getattr(message, 'caption', None) or get_name(message)
-        chat_title = message.from_user.first_name if message.from_user else "Unknown"
         user_id = message.from_user.id if message.from_user else 0
+        chat_title = message.from_user.first_name if message.from_user else "Unknown"
     else:
-        # Fallback for API/System calls where message is None or a Class
         file_caption = f"File: {db_id}"
-        chat_title = "API/System"
         user_id = 0
+        chat_title = "API/System"
 
     log_msg = await client.send_cached_media(
         chat_id=Telegram.FLOG_CHANNEL, 
