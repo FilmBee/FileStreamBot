@@ -69,6 +69,7 @@ def get_media_file_size(m):
 
 
 def get_name(media_msg: Message | FileId) -> str:
+    file_name = ""
     if isinstance(media_msg, Message):
         media = get_media_from_message(media_msg)
         file_name = getattr(media, "file_name", "")
@@ -79,7 +80,7 @@ def get_name(media_msg: Message | FileId) -> str:
     if not file_name:
         if isinstance(media_msg, Message) and media_msg.media:
             media_type = media_msg.media.value
-        elif media_msg.file_type:
+        elif hasattr(media_msg, "file_type") and media_msg.file_type:
             media_type = media_msg.file_type.name.lower()
         else:
             media_type = "file"
@@ -126,19 +127,36 @@ async def update_file_id(msg_id, multi_clients):
 
 
 async def send_file(client: Client, db_id, file_id: str, message):
-    file_caption = getattr(message, 'caption', None) or get_name(message)
-    log_msg = await client.send_cached_media(chat_id=Telegram.FLOG_CHANNEL, file_id=file_id,
-                                             caption=f'**{file_caption}**')
-
-    if message.chat.type == ChatType.PRIVATE:
-        await log_msg.reply_text(
-            text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** [{message.from_user.first_name}](tg://user?id={message.from_user.id})\n**Uꜱᴇʀ ɪᴅ :** `{message.from_user.id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
-            disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
+    # Check if message is a real instance or just a class/dummy
+    if isinstance(message, Message):
+        file_caption = getattr(message, 'caption', None) or get_name(message)
+        chat_title = message.from_user.first_name if message.from_user else "Unknown"
+        user_id = message.from_user.id if message.from_user else 0
     else:
+        # Fallback for API/System calls where message is None or a Class
+        file_caption = f"File: {db_id}"
+        chat_title = "API/System"
+        user_id = 0
+
+    log_msg = await client.send_cached_media(
+        chat_id=Telegram.FLOG_CHANNEL, 
+        file_id=file_id,
+        caption=f'**{file_caption}**'
+    )
+
+    if isinstance(message, Message) and message.chat:
+        if message.chat.type == ChatType.PRIVATE:
+            await log_msg.reply_text(
+                text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** [{chat_title}](tg://user?id={user_id})\n**Uꜱᴇʀ ɪᴅ :** `{user_id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
+                disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
+        else:
+            await log_msg.reply_text(
+                text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** {message.chat.title} \n**Cʜᴀɴɴᴇʟ ɪᴅ :** `{message.chat.id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
+                disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
+    else:
+        # Log for API/System
         await log_msg.reply_text(
-            text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** {message.chat.title} \n**Cʜᴀɴɴᴇʟ ɪᴅ :** `{message.chat.id}`\n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
+            text=f"**RᴇQᴜᴇꜱᴛᴇᴅ ʙʏ :** API/System \n**Fɪʟᴇ ɪᴅ :** `{db_id}`",
             disable_web_page_preview=True, parse_mode=ParseMode.MARKDOWN, quote=True)
 
     return log_msg
-    # return await client.send_cached_media(Telegram.BIN_CHANNEL, file_id)
-

@@ -74,17 +74,6 @@ async def stream_handler(request: web.Request):
 async def api_generate_handler(request: web.Request):
     """
     Secure API to generate stream/download links.
-    Headers:
-        X-API-KEY: <Your API_SECRET>
-    Body (JSON):
-        { "_id": "mongo_db_id" }  <-- OPTION 1: Retrieve existing file
-        OR
-        { 
-          "msg_info": {           <-- OPTION 2: Import from Channel (Solves access_hash)
-             "chat_id": -100xxxx, 
-             "message_id": 123 
-          } 
-        }
     """
     # 1. Security Check
     if not Server.API_SECRET:
@@ -126,22 +115,29 @@ async def api_generate_handler(request: web.Request):
                 return web.json_response({"status": "error", "message": "msg_info requires 'chat_id' and 'message_id'"}, status=400)
 
             try:
-                # FileStreamBot fetches the message itself
+                # 1. FileStreamBot fetches the message from the source channel
                 msg = await FileStream.get_messages(chat_id, message_id)
                 
                 if not msg or not msg.media:
                      return web.json_response({"status": "error", "message": "Message not found or has no media."}, status=404)
+
+                # 2. IMPORTANT: Copy the message to the Bot's Log Channel (FLOG_CHANNEL)
+                # This ensures the bot has a permanent reference and valid access hash for itself.
+                if not Telegram.FLOG_CHANNEL:
+                     return web.json_response({"status": "error", "message": "FLOG_CHANNEL is not set in config."}, status=500)
+
+                copied_msg = await msg.copy(Telegram.FLOG_CHANNEL)
+
+                # 3. Extract clean file info from the COPIED message (which belongs to the bot now)
+                f_info = get_file_info(copied_msg)
                 
-                # Extract clean file info valid for THIS bot
-                f_info = get_file_info(msg)
-                
-                # Add to DB (db.add_file handles duplication via file_unique_id)
+                # 4. Add to DB (db.add_file handles duplication via file_unique_id)
                 db_id = await db.add_file(f_info)
                 file_info = await db.get_file(db_id)
                 
             except Exception as e:
                 logging.error(f"API Fetch Error: {e}")
-                return web.json_response({"status": "error", "message": f"Could not fetch message from channel. Is Bot Admin there? Error: {str(e)}"}, status=400)
+                return web.json_response({"status": "error", "message": f"Error processing file. Ensure Bot is Admin in source channel. details: {str(e)}"}, status=400)
             
         else:
              return web.json_response({"status": "error", "message": "Request must contain '_id' or 'msg_info'."}, status=400)
