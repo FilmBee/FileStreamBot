@@ -22,7 +22,7 @@
     </a>
 </p>
 <p align='center'>
-  File Stream Bot provides high-speed stream links for Telegram files with support for Private Modes, Premium Access, and direct streaming.
+  File Stream Bot provides high-speed stream links for Telegram files with support for Private Modes, Premium Access, Secure API, and direct streaming.
 </p>
 
 
@@ -110,6 +110,7 @@ An example of `.env` file:
 API_ID = 789456
 API_HASH = ysx275f9638x896g43sfzx65
 BOT_TOKEN = 12345678:your_bot_token
+API_SECRET = your_super_secure_random_key_here
 ULOG_CHANNEL = -100123456789
 FLOG_CHANNEL = -100123456789
 DATABASE_URL = mongodb://admin:pass@192.168.27.1
@@ -140,6 +141,9 @@ ALLOWED_GROUPS = -10012345678 -10087654321
 * `DATABASE_URL`: MongoDB URI for saving User Data and Files List created by user. `str`
 * `FQDN`: A Fully Qualified Domain Name if present without http/s. Defaults to `BIND_ADDRESS`. `str`
 
+#### 🔐 API Vars :
+* `API_SECRET`: A secure, random string used to authenticate API requests. If not set, the API is disabled. `str`
+
 #### 🔒 Private Mode Vars :
 * `PRIVATE_MODE`: Set to `True` to enable restrictions (users must be in allowed groups). Set `False` for Public mode. `bool`
 * `ALLOWED_GROUPS`: Space separated IDs of Channels/Groups allowed in Private Mode. `str`
@@ -166,6 +170,51 @@ ALLOWED_GROUPS = -10012345678 -10087654321
 * `NO_PORT`: (True/False) Set PORT to 80 or 443 hide port display; ignore if on Heroku. Defaults to `False`.
 * `HAS_SSL`: (can be either `True` or `False`) If you want the generated links in https format. Defaults to `False`. 
 
+</details>
+
+<details>
+  <summary><b>API Documentation :</b></summary>
+
+The bot features a high-performance, secure API to generate stream links from other applications or bots.
+
+**Endpoint:** `POST /api/v1/generate`
+**Headers:** `X-API-KEY: <Your API_SECRET>`
+
+#### 1. Direct Lookup (Fastest)
+Use this if you already have the file's MongoDB `_id` stored.
+
+```json
+{
+  "_id": "65123abcdef..."
+}
+```
+
+#### 2. Cross-Bot Import (Smart)
+Use this to import files from another bot/channel. The bot will fetch the file, copy it to the database channel to ensure `access_hash` validity, and generate links.
+*Note: FileStreamBot must be an Admin in the source channel.*
+
+```json
+{
+  "msg_info": {
+    "chat_id": -100123456789,
+    "message_id": 4501
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "data": {
+    "_id": "65123...",
+    "file_name": "video.mp4",
+    "file_size": 1048576,
+    "stream_link": "[https://your-bot.com/watch/65123](https://your-bot.com/watch/65123)...",
+    "download_link": "[https://your-bot.com/dl/65123](https://your-bot.com/dl/65123)..."
+  }
+}
+```
 </details>
 
 <details>
