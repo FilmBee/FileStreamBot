@@ -3,6 +3,7 @@ import math
 import logging
 import mimetypes
 import traceback
+import secrets
 from aiohttp import web
 from aiohttp.http_exceptions import BadStatusLine
 from FileStream.bot import multi_clients, work_loads, FileStream
@@ -10,7 +11,11 @@ from FileStream.config import Telegram, Server
 from FileStream.server.exceptions import FIleNotFound, InvalidHash
 from FileStream import utils, StartTime, __version__
 from FileStream.utils.render_template import render_page
+from FileStream.utils.database import Database
+from FileStream.utils.human_readable import humanbytes
+from FileStream.utils.file_properties import get_file_info
 
+db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
 routes = web.RouteTableDef()
 
 @routes.get("/status", allow_head=True)
@@ -60,6 +65,111 @@ async def stream_handler(request: web.Request):
         logging.critical(e.with_traceback(None))
         logging.debug(traceback.format_exc())
         raise web.HTTPInternalServerError(text=str(e))
+
+# ---------------------------------------------------------------------------------------------------------
+# Secure API Endpoint (Refined for Cross-Bot Access)
+# ---------------------------------------------------------------------------------------------------------
+
+@routes.post("/api/v1/generate")
+async def api_generate_handler(request: web.Request):
+    """
+    Secure API to generate stream/download links.
+    Headers:
+        X-API-KEY: <Your API_SECRET>
+    Body (JSON):
+        { "_id": "mongo_db_id" }  <-- OPTION 1: Retrieve existing file
+        OR
+        { 
+          "msg_info": {           <-- OPTION 2: Import from Channel (Solves access_hash)
+             "chat_id": -100xxxx, 
+             "message_id": 123 
+          } 
+        }
+    """
+    # 1. Security Check
+    if not Server.API_SECRET:
+        return web.json_response(
+            {"status": "error", "message": "API endpoint disabled. API_SECRET not set on server."}, 
+            status=503
+        )
+
+    api_key = request.headers.get("X-API-KEY")
+    if not api_key or not secrets.compare_digest(api_key, Server.API_SECRET):
+        return web.json_response(
+            {"status": "error", "message": "Unauthorized. Invalid or missing X-API-KEY."}, 
+            status=401
+        )
+
+    # 2. Parse Data
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response(
+            {"status": "error", "message": "Invalid JSON body."}, 
+            status=400
+        )
+
+    # 3. Process Request
+    try:
+        if "_id" in data:
+            # Lookup existing file
+            db_id = data["_id"]
+            file_info = await db.get_file(db_id)
+        
+        elif "msg_info" in data:
+            # Register new file by fetching message (Solving access_hash issue)
+            msg_data = data["msg_info"]
+            chat_id = msg_data.get("chat_id")
+            message_id = msg_data.get("message_id")
+
+            if not chat_id or not message_id:
+                return web.json_response({"status": "error", "message": "msg_info requires 'chat_id' and 'message_id'"}, status=400)
+
+            try:
+                # FileStreamBot fetches the message itself
+                msg = await FileStream.get_messages(chat_id, message_id)
+                
+                if not msg or not msg.media:
+                     return web.json_response({"status": "error", "message": "Message not found or has no media."}, status=404)
+                
+                # Extract clean file info valid for THIS bot
+                f_info = get_file_info(msg)
+                
+                # Add to DB (db.add_file handles duplication via file_unique_id)
+                db_id = await db.add_file(f_info)
+                file_info = await db.get_file(db_id)
+                
+            except Exception as e:
+                logging.error(f"API Fetch Error: {e}")
+                return web.json_response({"status": "error", "message": f"Could not fetch message from channel. Is Bot Admin there? Error: {str(e)}"}, status=400)
+            
+        else:
+             return web.json_response({"status": "error", "message": "Request must contain '_id' or 'msg_info'."}, status=400)
+
+        # 4. Generate Response
+        stream_link = f"{Server.URL}watch/{file_info['_id']}"
+        download_link = f"{Server.URL}dl/{file_info['_id']}"
+        
+        return web.json_response({
+            "status": "success",
+            "data": {
+                "_id": str(file_info['_id']),
+                "file_name": file_info['file_name'],
+                "file_size": file_info['file_size'],
+                "file_size_human": humanbytes(file_info['file_size']),
+                "mime_type": file_info['mime_type'],
+                "stream_link": stream_link,
+                "download_link": download_link
+            }
+        })
+
+    except FIleNotFound:
+        return web.json_response({"status": "error", "message": "File not found."}, status=404)
+    except Exception as e:
+        traceback.print_exc()
+        return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+# ---------------------------------------------------------------------------------------------------------
 
 class_cache = {}
 

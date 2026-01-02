@@ -24,6 +24,10 @@
     "BOT_TOKEN": {
       "description": "Get this value from @BotFather"
     },
+    "API_SECRET": {
+      "description": "A secure secret key for accessing the API endpoints. (Generate a random string). If its empty then api is disabled.",
+      "required": false
+    },
     "FLOG_CHANNEL": {
       "description": "ID of Channel Where store files sent by users."
     },

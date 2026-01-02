@@ -40,3 +40,5 @@ class Server:
     URL = "http{}://{}{}/".format(
         "s" if HAS_SSL else "", FQDN, "" if NO_PORT else ":" + str(PORT)
     )
+    # Security: Secret key for API access. If None, API is disabled.
+    API_SECRET = env.get("API_SECRET", None)
