@@ -210,8 +210,8 @@ Use this to import files from another bot/channel. The bot will fetch the file, 
     "_id": "65123...",
     "file_name": "video.mp4",
     "file_size": 1048576,
-    "stream_link": "[https://your-bot.com/watch/65123](https://your-bot.com/watch/65123)...",
-    "download_link": "[https://your-bot.com/dl/65123](https://your-bot.com/dl/65123)..."
+    "stream_link": "https://your-bot.com/watch/65123",
+    "download_link": "https://your-bot.com/dl/65123"
   }
 }
 ```
