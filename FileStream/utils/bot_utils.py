@@ -1,3 +1,6 @@
+import time
+import asyncio
+from typing import Union
 from pyrogram.errors import UserNotParticipant, FloodWait
 from pyrogram.enums.parse_mode import ParseMode
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
@@ -6,13 +9,9 @@ from FileStream.utils.database import Database
 from FileStream.utils.human_readable import humanbytes
 from FileStream.config import Telegram, Server
 from FileStream.bot import FileStream
-import asyncio
-from typing import (
-    Union
-)
-
 
 db = Database(Telegram.DATABASE_URL, Telegram.SESSION_NAME)
+AUTH_CACHE = {}
 
 async def get_invite_link(bot, chat_id: Union[str, int]):
     try:
@@ -166,21 +165,35 @@ async def is_channel_banned(bot, message):
 
 async def check_private_mode(bot, message):
     user_id = message.from_user.id
+    current_time = time.time()
+
+    # 1. Check Cache
+    if user_id in AUTH_CACHE:
+        status, timestamp = AUTH_CACHE[user_id]
+        if current_time - timestamp < 300:  # 5 Minutes Expiry
+            return status
+        else:
+            del AUTH_CACHE[user_id]
     
     # If no groups are configured, strict block (unless Auth user, checked separately)
     if not Telegram.ALLOWED_GROUPS:
+        AUTH_CACHE[user_id] = (False, current_time)
         return False
 
     # Check if user is member of ANY allowed group
+    is_member = False
     for chat_id in Telegram.ALLOWED_GROUPS:
         try:
             member = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
             if member.status not in ["kicked", "left", "banned"]:
-                return True
+                is_member = True
+                break
         except Exception:
             continue
-            
-    return False
+    
+    # Save to Cache
+    AUTH_CACHE[user_id] = (is_member, current_time)
+    return is_member
 
 #---------------------[ USER AUTH ]---------------------#
 
