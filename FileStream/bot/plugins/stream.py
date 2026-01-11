@@ -1,4 +1,3 @@
-FileStream/bot/plugins/stream.py
 import asyncio
 import logging
 from FileStream.bot import FileStream, multi_clients
